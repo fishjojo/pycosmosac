@@ -48,6 +48,6 @@ def load(name):
 
 
 if __name__ == "__main__":
-    mol = load("h2o.cosmo")
+    mol = load("./test/h2o.cosmo")
     print(mol.geometry)
     #print(mol.cavity.segments)

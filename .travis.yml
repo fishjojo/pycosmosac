@@ -27,8 +27,7 @@ install:
 script:
  - cd $TRAVIS_BUILD_DIR
  - export OMP_NUM_THREADS=1
- - pytest --durations=0 --cov-config=.coveragerc --cov=pycosmosac
-   $TRAVIS_BUILD_DIR/pycosmosac
+ - pytest --durations=0 --cov-config=./.coveragerc --cov=./pycosmosac --cov-report=xml --cov-report=term ./pycosmosac
 
 after_success:
-  - codecov
+ - bash <(curl -s https://codecov.io/bash) -t "d755021d-0f71-44d8-9f22-3c6ebf29bbd2" -f "coverage.xml"
