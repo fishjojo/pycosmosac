@@ -18,6 +18,7 @@ cache:
 
 before_install:
  - pip install -r requirements.txt
+ - pip install codecov pytest-cov
 
 install:
  - cd $TRAVIS_BUILD_DIR
@@ -26,4 +27,8 @@ install:
 script:
  - cd $TRAVIS_BUILD_DIR
  - export OMP_NUM_THREADS=1
- - pytest --durations=0 $TRAVIS_BUILD_DIR/pycosmosac
+ - pytest --durations=0 --cov-config=.coveragerc --cov=pycosmosac
+   $TRAVIS_BUILD_DIR/pycosmosac
+
+after_success:
+  - codecov

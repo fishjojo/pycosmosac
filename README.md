@@ -8,4 +8,5 @@ A general Python implementation of COSMO-SAC models.
 Installation
 ------------
 * At top directory
-    - pip install .
+
+	pip install .
