@@ -17,6 +17,14 @@ class Cosmo():
         return self.mol
 
 if __name__ == "__main__":
+    import numpy as np
+
     mycosmo = Cosmo()
-    mycosmo.load("h2o.cosmo")
-    print(mycosmo.mol.geometry)
+    mycosmo.load("./test/h2o.cosmo")
+    cavity = mycosmo.mol.cavity
+    total_area = cavity.area
+    segments = cavity.segments
+    charge = segments["charge"]
+    area = segments["area"]
+    print(np.sum(area) - total_area)
+
