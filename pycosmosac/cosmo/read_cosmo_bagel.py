@@ -31,7 +31,7 @@ def get_cavity(data):
     cav.segments["xyz"] = np.column_stack((x,y,z))
     cav.segments["charge"] = np.asarray(df['charge / e'].tolist(), dtype=float)
     cav.segments["area"] = np.asarray(df['area / A^2'].tolist(), dtype=float)
-    cav.segments["charge/area"] = np.asarray(df['charge/area / e/A^2'].tolist(), dtype=float)
+    cav.segments["sigma"] = np.asarray(df['charge/area / e/A^2'].tolist(), dtype=float)
     return cav
 
 def load(name):

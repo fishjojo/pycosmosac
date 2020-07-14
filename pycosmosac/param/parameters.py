@@ -1,4 +1,7 @@
 import json
+from pycosmosac.param import data
+
+KEYS = ["a_eff", "f_decay", "q_0", "r_0", "z"]
 
 class Parameters():
     '''
@@ -8,9 +11,10 @@ class Parameters():
             user input paramters
     '''
 
-    def __init__(self, parameters="Mullins_2006.json"):
+    def __init__(self, parameters=data.Saidi_2002):
         self.parameters = None
         self.load(parameters)
+        self.sanity_check()
 
     def load(self, parameters):
         '''
@@ -26,6 +30,11 @@ class Parameters():
                 raise ValueError("JSON format expected.")
         else:
             raise TypeError("str or dict expected, while the input is %s." % type(parameters))
+
+    def sanity_check(self):
+        for key in KEYS:
+            if not key in self.parameters:
+                raise RuntimeError("parameter set has to include %s." % key)
 
     def dump_to_string(self):
         '''

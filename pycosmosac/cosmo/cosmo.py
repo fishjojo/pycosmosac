@@ -1,7 +1,10 @@
 
 class Cosmo():
     '''
-    Class for reading cosmo files and storing useful information
+    Class for reading cosmo files
+    Attributes:
+        mol : Mole
+            Molecular information.
     '''
     def __init__(self):
         self.mol = None
