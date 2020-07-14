@@ -118,9 +118,12 @@ class Sigma():
 if __name__ == "__main__":
     from pycosmosac.param import parameters
     from pycosmosac.cosmo import cosmo
+    from pycosmosac.utils import misc
 
     myparam = parameters.Parameters()
     mycosmo = cosmo.Cosmo()
-    mol = mycosmo.load("h2o.cosmo")
+    mol = mycosmo.load("./test/h2o.cosmo")
     mysigma = Sigma(mol, myparam)
+    mysigma.write_sigma_file = False
     mysigma.kernel()
+    print(misc.fp(mysigma.pA) - -1.917622937152116)
