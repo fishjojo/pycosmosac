@@ -18,16 +18,13 @@ cache:
 
 before_install:
  - pip install -r requirements.txt
- - pip install codecov pytest-cov
-
-install:
- - cd $TRAVIS_BUILD_DIR
- - pip install .
+ - pip install pytest pytest-cov
 
 script:
  - cd $TRAVIS_BUILD_DIR
  - export OMP_NUM_THREADS=1
- - pytest --durations=0 --cov-config=./.coveragerc --cov=./pycosmosac --cov-report=xml --cov-report=term ./pycosmosac
+ - export PYTHONPATH=$TRAVIS_BUILD_DIR:$PYTHONPATH
+ - pytest -v --durations=0 --cov-config=./.coveragerc --cov=./pycosmosac --cov-report=xml --cov-report=term ./pycosmosac
 
 after_success:
  - bash <(curl -s https://codecov.io/bash) -t "d755021d-0f71-44d8-9f22-3c6ebf29bbd2" -f "coverage.xml"
