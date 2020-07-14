@@ -125,12 +125,12 @@ if __name__ == "__main__":
 
     myparam = parameters.Parameters()
 
-    mol1 = cosmo.Cosmo().load("butane.cosmo")
+    mol1 = cosmo.Cosmo().load("./test/butane.cosmo")
     sigma1 = sigma.Sigma(mol1, myparam)
     sigma1.write_sigma_file = False
     sigma1.kernel()
 
-    mol2 = cosmo.Cosmo().load("h2o.cosmo")
+    mol2 = cosmo.Cosmo().load("./test/h2o.cosmo")
     sigma2 = sigma.Sigma(mol2, myparam)
     sigma2.write_sigma_file = False
     sigma2.kernel()
@@ -138,4 +138,4 @@ if __name__ == "__main__":
     x = [0., 1.]
     T = 298.15
     myac = AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
-    print(myac.kernel())
+    print(myac.kernel() - np.asarray([10.05122252, 0.0]))
