@@ -1,2 +1,2 @@
 # pycosmosac
-A general implementation of cosmo-sac models
+A general implementation of COSMO-SAC models
