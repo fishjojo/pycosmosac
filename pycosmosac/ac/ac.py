@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from pycosmosac.utils import constants as const
 
@@ -39,6 +40,8 @@ def solve_lnGamma(W, GammaS, ps, T, thresh=1e-6, maxiter=500):
         if diff < thresh:
             break
         count += 1
+    if count == maxiter:
+        warnings.warn("solving Gamma reached max iterations, %s" % maxiter)
     return np.log(GammaS)
 
 def lngamma_r(mols, sigmas, x, T, parameters, thresh=1e-6, maxiter=500):
