@@ -69,6 +69,12 @@ class Sigma():
             Wether or not to write the sigma file. Default is True.
         sigma_filename: str
             Sigma file name. Default is "out.sigma".
+        chem_name : str
+            Name of the compound.
+        cas_no : str
+            CAS registry number.
+        inchikey : str
+            IUPAC Standard InChIKey
         sigma : ndarray
             Averaged charge density.
         pA : ndarray
@@ -83,6 +89,10 @@ class Sigma():
         self.nbins = 50
         self.write_sigma_file = True
         self.sigma_filename = "out.sigma"
+        #optional inputs
+        self.chem_name = None
+        self.cas_no = None
+        self.inchikey = None
         #followings are saved data
         self.sigma = None
         self.pA = None
@@ -101,6 +111,26 @@ class Sigma():
         if self.write_sigma_file:
             self.dump_to_file(self.sigma_filename)
 
+    def get_meta(self):
+        meta = {}
+        if self.chem_name:
+            meta['name'] = self.chem_name
+        if self.cas_no:
+            meta['CAS'] = self.cas_no
+        if self.inchikey:
+            meta["standard_INCHIKEY"] = self.inchikey
+        meta['area [A^2]'] = self.mol.cavity.area
+        meta['volume [A^3]'] = self.mol.cavity.volume
+
+        parameters = self.parameters.parameters
+        if "r_av" in parameters:
+            meta['r_av [A]'] = parameters["r_av"]
+        else:
+            meta['r_av [A]'] = (parameters["a_eff"] / np.pi)**0.5
+        meta['f_decay'] = parameters["f_decay"]
+        if "sigma_hb" in parameters:
+            meta['sigma_hb [e/A^2]'] = parameters["sigma_hb"]
+        return meta
 
     def dump_to_file(self, name):
         '''
@@ -108,7 +138,7 @@ class Sigma():
         '''
         try:
             with open(name, 'w') as f:
-                out = SIGMA_TEMPLATE.format(meta = json.dumps(self.meta, ignore_nan=True))
+                out = SIGMA_TEMPLATE.format(meta = json.dumps(self.get_meta(), ignore_nan=True))
                 for i in range(len(self.pA)):
                     out += '{0:0.4f} {1:17.14e}\n'.format(self.sigma_grid[i], self.pA[i])
                 f.write(out)
