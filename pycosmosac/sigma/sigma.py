@@ -1,3 +1,4 @@
+import warnings
 import simplejson as json
 import numpy as np
 from scipy.spatial import distance
@@ -84,9 +85,14 @@ def split_sigma_profile(mol, sigma, parameters, bounds=[-0.025, 0.025], nbins = 
     pA_ot = compute_sigma_profile(area_ot, sigma_ot, bounds, nbins, grid)
     pA_nhb = compute_sigma_profile(area_nhb, sigma_nhb, bounds, nbins, grid)
 
-    sigma0 = parameters["sigma_0"]
+    if not "sigma_0" in parameters:
+        warings.warn("sigma_0 missing in the parameter set. probabality of hydrogen bonding will be set to 1")
+        P_hb=1.0
+    else:
+        sigma0 = parameters["sigma_0"]
+        P_hb = 1.0 - np.exp(-grid*grid/(2.0*sigma0*sigma0))
+
     pA_hb = pA_oh + pA_ot
-    P_hb = 1.0 - np.exp(-grid*grid/(2.0*sigma0*sigma0))
     pA_oh *= P_hb
     pA_ot *= P_hb
     pA_nhb = pA_nhb + pA_hb * (1.0 - P_hb)
@@ -194,8 +200,13 @@ class Sigma():
         try:
             with open(name, 'w') as f:
                 out = SIGMA_TEMPLATE.format(meta = json.dumps(self.get_meta(), ignore_nan=True))
-                for i in range(len(self.pA)):
-                    out += '{0:0.4f} {1:17.14e}\n'.format(self.sigma_grid[i], self.pA[i])
+                if self.split_sigma:
+                    for profiles in [self.pA_nhb, self.pA_oh, self.pA_ot]:
+                        for i in range(len(profiles)):
+                            out += '{0:0.4f} {1:17.14e}\n'.format(self.sigma_grid[i], profiles[i])
+                else:
+                    for i in range(len(self.pA)):
+                        out += '{0:0.4f} {1:17.14e}\n'.format(self.sigma_grid[i], self.pA[i])
                 f.write(out)
         except:
             raise RuntimeError("failed to write sigma file.")
@@ -205,17 +216,15 @@ if __name__ == "__main__":
     from pycosmosac.cosmo import cosmo
     from pycosmosac.utils import misc
 
-    myparam = parameters.Parameters()
     mycosmo = cosmo.Cosmo()
     mol = mycosmo.load("./test/h2o.cosmo")
+    myparam = parameters.Parameters()
     mysigma = Sigma(mol, myparam)
     mysigma.write_sigma_file = False
     mysigma.kernel()
     print(misc.fp(mysigma.pA) - -1.917622937152116)
 
     myparam = parameters.Parameters(data.Hsieh_2010)
-    mycosmo = cosmo.Cosmo()
-    mol = mycosmo.load("./test/h2o.cosmo")
     mysigma = Sigma(mol, myparam)
     mysigma.write_sigma_file = False
     mysigma.split_sigma = True
