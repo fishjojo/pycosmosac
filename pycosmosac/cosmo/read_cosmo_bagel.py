@@ -3,6 +3,7 @@ from io import StringIO
 import numpy as np
 import pandas
 from pycosmosac.molecule import mole, cavity
+from pycosmosac.utils import elements
 
 def get_molecule(data):
     sdata = re.search(r"!DATE[a-zA-Z0-9:\s]+\n(.+)end\s*", data, re.DOTALL).group(1)
@@ -13,7 +14,10 @@ def get_molecule(data):
     y = np.asarray(df['y / A'].tolist(), dtype=float)
     z = np.asarray(df['z / A'].tolist(), dtype=float)
     geometry["xyz"] = np.column_stack((x,y,z))
-    geometry["atom"] = df['atom'].tolist()
+    geometry["atom"] = []
+    atoms = df['atom'].tolist()
+    for atom in atoms:
+        geometry["atom"].append(elements.std_symb(atom))
     return geometry
 
 def get_cavity(data):
@@ -48,6 +52,7 @@ def load(name):
 
 
 if __name__ == "__main__":
+    from pycosmosac.utils import misc
     mol = load("./test/h2o.cosmo")
-    print(mol.geometry)
-    #print(mol.cavity.segments)
+    print(misc.fp(mol.geometry["xyz"]) - -1.3049969366762706)
+    print(mol.geometry["atom"] == ['O', 'H', 'H'])

@@ -1,5 +1,34 @@
+import itertools
+
+ELEMENTS = ['X', #Ghost
+    'H' , 'He', 'Li', 'Be', 'B' , 'C' , 'N' , 'O' , 'F' , 'Ne',
+    'Na', 'Mg', 'Al', 'Si', 'P' , 'S' , 'Cl', 'Ar', 'K' , 'Ca',
+    'Sc', 'Ti', 'V' , 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+    'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y' , 'Zr',
+    'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
+    'Sb', 'Te', 'I' , 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd',
+    'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb',
+    'Lu', 'Hf', 'Ta', 'W' , 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+    'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+    'Pa', 'U' , 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm',
+    'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds',
+    'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og',
+]
+
+ELEMENTS_UPPER = dict((x.upper(), x) for x in ELEMENTS)
+
+def std_symb(symb_or_chg):
+    if isinstance(symb_or_chg, str):
+        symb = symb_or_chg.upper()
+        if symb in ELEMENTS_UPPER:
+            return ELEMENTS_UPPER[symb]
+        else:
+            raise ValueError("unrecognized symbol: %s." % symb_or_chg)
+    else:
+        return ELEMENTS[symb_or_chg]
+
 # Covalent radii in Angstrom (https://doi.org/10.1039/b801115j)
-covalent_radius = {
+COVALENT_RADIUS = {
     'H':0.31,
     'He':0.28,
     'Li':1.28,
@@ -97,3 +126,10 @@ covalent_radius = {
     'Am':1.80,
     'Cm':1.69
 }
+
+COVALENT_BONDS= {
+    (i, j): COVALENT_RADIUS[i] + COVALENT_RADIUS[j] for i, j in itertools.product(COVALENT_RADIUS.keys(), repeat=2)
+}
+
+def covalent_bond(atom_i, atom_j):
+    return COVALENT_BONDS[(atom_i, atom_j)]

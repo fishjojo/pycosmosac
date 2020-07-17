@@ -27,4 +27,3 @@ if __name__ == "__main__":
     charge = segments["charge"]
     area = segments["area"]
     print(np.sum(area) - total_area)
-
