@@ -36,7 +36,7 @@ def average_charge_density(segments, parameters):
     sigma_average = np.sum(tmp * sigma, axis=1) / np.sum(tmp, axis=1)
     return sigma_average
 
-def compute_sigma_profile(segments, sigma, bounds=[-0.025, 0.025], nbins = 50, grid=None):
+def compute_sigma_profile(area, sigma, bounds=[-0.025, 0.025], nbins = 50, grid=None):
     #Eqs. 5--8 in Ref. 1.
 
     step_size = (bounds[1] - bounds[0]) / nbins
@@ -44,7 +44,6 @@ def compute_sigma_profile(segments, sigma, bounds=[-0.025, 0.025], nbins = 50, g
         grid = np.arange(bounds[0], bounds[1]+step_size, step_size)
     pA = np.zeros((nbins+1), dtype=float)
 
-    area = segments["area"]
     index = (np.floor((sigma - bounds[0]) / step_size)).astype(int)
     w = (grid[index+1] - sigma) / step_size
     for i in range(len(area)):
@@ -52,6 +51,47 @@ def compute_sigma_profile(segments, sigma, bounds=[-0.025, 0.025], nbins = 50, g
         pA[index[i]+1] += (1 - w[i]) * area[i]
     assert(abs(np.sum(pA) - np.sum(area)) < step_size)
     return pA
+
+def split_sigma_profile(mol, sigma, parameters, bounds=[-0.025, 0.025], nbins = 50, grid=None):
+    step_size = (bounds[1] - bounds[0]) / nbins
+    if grid is None:
+        grid = np.arange(bounds[0], bounds[1]+step_size, step_size)
+
+    geometry = mol.geometry
+    atoms = np.array(geometry["atom"])
+    hb_class = np.array(mol.hb_class)
+    atom_map = mol.cavity.atom_map
+    segments = mol.cavity.segments
+    area = segments["area"]
+
+    seg_atoms = atoms[atom_map-1]
+    seg_hb_class = hb_class[atom_map-1]
+
+    mask_oh = (((seg_atoms == "O") & (seg_hb_class == "OH") & (sigma > 0.0)) |
+               ((seg_atoms == "H") & (seg_hb_class == "OH") & (sigma < 0.0)))
+    mask_ot = (((np.isin(seg_atoms, ["O","N","F"])) & (seg_hb_class == "OT") & (sigma > 0.0)) |
+               ((seg_atoms == "H") & (seg_hb_class == "OT") & (sigma < 0.0)))
+    mask_nhb = ~(mask_oh | mask_ot)
+
+    sigma_oh = sigma[mask_oh]
+    sigma_ot = sigma[mask_ot]
+    sigma_nhb = sigma[mask_nhb]
+    area_oh = area[mask_oh]
+    area_ot = area[mask_ot]
+    area_nhb = area[mask_nhb]
+
+    pA_oh = compute_sigma_profile(area_oh, sigma_oh, bounds, nbins, grid)
+    pA_ot = compute_sigma_profile(area_ot, sigma_ot, bounds, nbins, grid)
+    pA_nhb = compute_sigma_profile(area_nhb, sigma_nhb, bounds, nbins, grid)
+
+    sigma0 = parameters["sigma_0"]
+    pA_hb = pA_oh + pA_ot
+    P_hb = 1.0 - np.exp(-grid*grid/(2.0*sigma0*sigma0))
+    pA_oh *= P_hb
+    pA_ot *= P_hb
+    pA_nhb = pA_nhb + pA_hb * (1.0 - P_hb)
+    return pA_nhb, pA_oh, pA_ot
+
 
 class Sigma():
     '''
@@ -67,8 +107,10 @@ class Sigma():
             Number of bins in sigma profile. Default is 50.
         write_sigma_file : bool
             Wether or not to write the sigma file. Default is True.
-        sigma_filename: str
+        sigma_filename : str
             Sigma file name. Default is "out.sigma".
+        split_sigma : bool
+            Wether to split sigma profile. Default is False.
         chem_name : str
             Name of the compound.
         cas_no : str
@@ -79,6 +121,12 @@ class Sigma():
             Averaged charge density.
         pA : ndarray
             y axis of the sigma profile.
+        pA_nhb : ndarray
+            Non-hydrogen bonding part of sigma profile.
+        pA_oh : ndarray
+            OH type of hydrogen bonding part of sigma profile.
+        pA_ot : ndarray
+            Other type of hydrogen bonding part of sigma profile.
         sigma_grid: ndarray
             x axis of the sigma profile.
     '''
@@ -89,6 +137,7 @@ class Sigma():
         self.nbins = 50
         self.write_sigma_file = True
         self.sigma_filename = "out.sigma"
+        self.split_sigma = False
         #optional inputs
         self.chem_name = None
         self.cas_no = None
@@ -96,6 +145,9 @@ class Sigma():
         #followings are saved data
         self.sigma = None
         self.pA = None
+        self.pA_nhb = None
+        self.pA_oh = None
+        self.pA_ot = None
         self.sigma_grid = None
         self.meta = {}
 
@@ -106,7 +158,10 @@ class Sigma():
 
         step_size = (self.bounds[1] - self.bounds[0]) / self.nbins
         self.sigma_grid = np.arange(self.bounds[0], self.bounds[1]+step_size, step_size)
-        self.pA = compute_sigma_profile(self.mol.cavity.segments, self.sigma, self.bounds, self.nbins, self.sigma_grid)
+        self.pA = compute_sigma_profile(self.mol.cavity.segments["area"], self.sigma, self.bounds, self.nbins, self.sigma_grid)
+        if self.split_sigma:
+            self.pA_nhb, self.pA_oh, self.pA_ot = split_sigma_profile(self.mol, self.sigma, self.parameters.parameters,
+                                                                      self.bounds, self.nbins, self.sigma_grid)
 
         if self.write_sigma_file:
             self.dump_to_file(self.sigma_filename)
@@ -146,7 +201,7 @@ class Sigma():
             raise RuntimeError("failed to write sigma file.")
 
 if __name__ == "__main__":
-    from pycosmosac.param import parameters
+    from pycosmosac.param import parameters, data
     from pycosmosac.cosmo import cosmo
     from pycosmosac.utils import misc
 
@@ -157,3 +212,12 @@ if __name__ == "__main__":
     mysigma.write_sigma_file = False
     mysigma.kernel()
     print(misc.fp(mysigma.pA) - -1.917622937152116)
+
+    myparam = parameters.Parameters(data.Hsieh_2010)
+    mycosmo = cosmo.Cosmo()
+    mol = mycosmo.load("./test/h2o.cosmo")
+    mysigma = Sigma(mol, myparam)
+    mysigma.write_sigma_file = False
+    mysigma.split_sigma = True
+    mysigma.kernel()
+    print(np.sum(mysigma.pA - (mysigma.pA_nhb + mysigma.pA_oh + mysigma.pA_ot)))
