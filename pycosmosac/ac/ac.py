@@ -86,6 +86,72 @@ def lngamma_r(mols, sigmas, x, T, parameters, thresh=1e-6, maxiter=500):
     result = result * n
     return result
 
+def lngamma_r3(mols, sigmas, x, T, parameters, thresh=1e-6, maxiter=500):
+    aeff = parameters["a_eff"]
+    A = []
+    for mol in mols:
+        A.append(mol.cavity.area)
+    A = np.asarray(A)
+    n = A / aeff
+
+    p = []
+    for i, sigma in enumerate(sigmas):
+        pA = np.asarray([sigma.pA_nhb, sigma.pA_oh, sigma.pA_ot]).ravel()
+        p.append(pA / A[i])
+
+    aa = np.sum(x * A)
+    ps = np.zeros_like(p[0])
+    for i in range(len(x)):
+        ps += x[i] * A[i] * p[i] / aa
+
+    try:
+        ces = parameters["A_es"] + parameters["B_es"] / (T*T)
+        c_ohoh = parameters["c_ohoh"]
+        c_otot = parameters["c_otot"]
+        c_ohot = parameters["c_ohot"]
+    except:
+        raise RuntimeError("A_es, B_es, c_ohoh, c_otot, or c_ohot not in parameter set")
+
+    grid = sigmas[0].sigma_grid
+    grid3 = np.asarray([grid,grid,grid]).ravel()
+    ngrid = len(grid)
+    ngrid2 = ngrid * 2
+    ngrid3 = len(grid3)
+    assert(ngrid3 % ngrid == 0)
+    chb = np.zeros((ngrid3,ngrid3))
+    sigma2 = grid3[:,None] * grid3[None,:]
+    mask_sigma = sigma2 < 0
+    mask_oh = np.full((ngrid3,ngrid3), False)
+    mask_oh[ngrid:ngrid2, ngrid:ngrid2] = True
+    mask_oh = ((mask_oh) & (mask_sigma))
+    chb[mask_oh] = c_ohoh
+
+    mask_ot = np.full((ngrid3,ngrid3), False)
+    mask_ot[ngrid2:, ngrid2:] = True
+    mask_ot = ((mask_ot) & (mask_sigma))
+    chb[mask_ot] = c_otot
+
+    mask_ohot = np.full((ngrid3,ngrid3), False)
+    mask_ohot[ngrid:ngrid2, ngrid2:] = True
+    mask_ohot[ngrid2:, ngrid:ngrid2] = True
+    mask_ohot = ((mask_ohot) & (mask_sigma))
+    chb[mask_ohot] = c_ohot
+
+    W = ces * (grid3[:, None] + grid3[None, :])**2 - chb * (grid3[:, None] - grid3[None, :])**2
+
+    GammaS = np.ones_like(ps)
+    lnGammaS = solve_lnGamma(W, GammaS, ps, T, thresh, maxiter)
+
+    result = []
+    for pi in p:
+        Gammai = np.ones_like(ps)
+        lnGammai = solve_lnGamma(W, Gammai, pi, T, thresh, maxiter)
+        result.append(np.dot(pi, lnGammaS - lnGammai))
+
+    result = np.asarray(result)
+    result = result * n
+    return result
+
 class AC():
     '''
     Class for computing activity coefficients
@@ -100,6 +166,8 @@ class AC():
             List of Sigma objects.
         parameters : Parameters
             The Parameters object.
+        split_sigma : bool
+            Whether to use splitted sigma profile.
     '''
     def __init__(self, mols, x, T, sigmas, parameters):
         self.mols = mols
@@ -107,6 +175,7 @@ class AC():
         self.T = T
         self.sigmas = sigmas
         self.parameters = parameters
+        self.split_sigma = sigmas[0].split_sigma
         self.sanity_check()
 
     def sanity_check(self):
@@ -117,12 +186,15 @@ class AC():
 
     def kernel(self):
         lngamma =  lngamma_c(self.mols, self.x, self.parameters.parameters)
-        lngamma += lngamma_r(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
+        if not self.split_sigma:
+            lngamma += lngamma_r(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
+        else:
+            lngamma += lngamma_r3(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
         return lngamma
 
 
 if __name__ == "__main__":
-    from pycosmosac.param import parameters
+    from pycosmosac.param import parameters, data
     from pycosmosac.cosmo import cosmo
     from pycosmosac.sigma import sigma
 
@@ -142,3 +214,16 @@ if __name__ == "__main__":
     T = 298.15
     myac = AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
     print(myac.kernel() - np.asarray([10.05122252, 0.0]))
+
+    myparam = parameters.Parameters(data.Hsieh_2010)
+    sigma1 = sigma.Sigma(mol1, myparam)
+    sigma1.write_sigma_file = False
+    sigma1.split_sigma = True
+    sigma1.kernel()
+
+    sigma2 = sigma.Sigma(mol2, myparam)
+    sigma2.write_sigma_file = False
+    sigma2.split_sigma = True
+    sigma2.kernel()
+    myac = AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
+    print(myac.kernel() - np.asarray([8.81631154, 0.0]))
