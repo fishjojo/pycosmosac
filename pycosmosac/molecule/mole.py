@@ -1,6 +1,8 @@
+import warnings
 import numpy as np
 from scipy.spatial import distance
 from pycosmosac.molecule.cavity import Cavity
+from pycosmosac.param import data
 from pycosmosac.utils import elements
 
 BOND_SCALING = 1.2
@@ -57,6 +59,82 @@ def classify_hydrogen_bonds(mol, geometry=None, connectivity=None):
             hb_class.append('NHB')
     return hb_class
 
+def get_dispersion_type(mol, geometry=None, connectivity=None):
+    if geometry is None: geometry = mol.geometry
+    if connectivity is None: connectivity = mol.connectivity
+    atoms = geometry["atom"]
+
+    if len(atoms) == 3 and atoms.count("O") == 1 and atoms.count("H") == 2:
+        disp_tot = (data.disp["H(H2O)"] * 2 + data.disp["-O-"]) / 3.0
+        return disp_tot, "H2O"
+
+    disp_type = "NHB"
+    disp_tot = 0.0
+    natom = 0
+    nCOOH = 0
+    for i, atom_i in enumerate(atoms):
+        n = len(connectivity[i])
+        if atom_i == "C":
+            natom += 1
+            if n == 4:
+                disp_tot += data.disp["C(sp3)"] 
+            elif n == 3:
+                disp_tot += data.disp["C(sp2)"]
+                atom_js = []
+                js = []
+                for j in connectivity[i]:
+                    atom_j.append(atoms[j])
+                    js.append(j)
+                if atom_js.count("O") == 2:
+                    for j, atom_j in zip(js,atom_js):
+                        if atom_j != "O":
+                            continue
+                        if len(connectivity[j]) == 2:
+                            for k in connectivity[j]:
+                                if atoms[k] == "H":
+                                    nCOOH += 1
+                                    disp_tot += data.disp["H(COOH)"]
+                                    disp_type = "COOH"
+            elif n == 2:
+                disp_tot += data.disp["C(sp)"]
+        elif atom_i == "N":
+            natom += 1
+            if n == 3:
+                disp_tot += data.disp["N(sp3)"]
+            elif n == 2:
+                disp_tot += data.disp["N(sp2)"]
+            elif n == 1:
+                disp_tot += data.disp["N(sp)"]
+        elif atom_i == "O":
+            natom += 1
+            if n == 2:
+                disp_tot += data.disp["-O-"]
+            elif n == 1:
+                disp_tot += data.disp["=O"]
+        elif atom_i == "F":
+            natom += 1
+            disp_tot += data.disp["F"]
+        elif atom_i == "Cl":
+            natom += 1
+            disp_tot += data.disp["Cl"]
+        elif atom_i == "H":
+            j = connectivity[i][0]
+            atom_j = atoms[j]
+            if atom_j == "O":
+                natom += 1
+                disp_tot += data.disp["H(OH)"]
+            elif atom_j == "N":
+                natom += 1
+                disp_tot += data.disp["H(NH)"]
+        else:
+            warnings.warn("dispersion parameter not available for %s" % atom_i)
+
+    disp_tot -= nCOOH * data.disp["H(OH)"]
+    disp_tot /= natom
+
+    return disp_tot, disp_type
+
+
 class Mole():
     '''
     Class for molecular information
@@ -88,6 +166,7 @@ class Mole():
 
     get_connectivity = get_connectivity
     classify_hydrogen_bonds = classify_hydrogen_bonds
+    get_dispersion_type = get_dispersion_type
 
 if __name__ == "__main__":
     mol = Mole()
@@ -99,3 +178,5 @@ if __name__ == "__main__":
     mol.build(geometry)
     print(mol.connectivity == [[1, 2], [0], [0]])
     print(mol.hb_class == ['OH','OH','OH'])
+    print(mol.get_dispersion_type()[0] - 70.75953333333332)
+    print(mol.get_dispersion_type()[1] == "H2O")

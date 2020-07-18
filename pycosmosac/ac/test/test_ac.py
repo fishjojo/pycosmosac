@@ -38,5 +38,21 @@ class KnownValues(unittest.TestCase):
         myac = ac.AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
         self.assertTrue(np.allclose(myac.kernel(), np.asarray([8.81631154, 0.0])))
 
+    def test_dispersion(self):
+        myparam = parameters.Parameters(data.Hsieh_2010)
+        sigma1 = sigma.Sigma(mol1, myparam)
+        sigma1.write_sigma_file = False
+        sigma1.split_sigma = True
+        sigma1.kernel()
+        sigma2 = sigma.Sigma(mol2, myparam)
+        sigma2.write_sigma_file = False
+        sigma2.split_sigma = True
+        sigma2.kernel()
+        myac = ac.AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
+        myac.dispersion = True
+        self.assertTrue(np.allclose(myac.kernel(), np.asarray([9.55918891, 0.])))
+
+
+
 if __name__ == '__main__':
     unittest.main()

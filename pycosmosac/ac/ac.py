@@ -152,6 +152,42 @@ def lngamma_r3(mols, sigmas, x, T, parameters, thresh=1e-6, maxiter=500):
     result = result * n
     return result
 
+def lngamma_dsp(mols, sigmas, x, parameters):
+    if len(x) != 2:
+        warnings.warn("dispersion corrections are only implemented for binary mixtures.")
+        return 0.0
+
+    sigma_hb = parameters["sigma_hb"]
+
+    grid = sigmas[0].sigma_grid
+    disp_epss = []
+    disp_types = []
+    for i, mol in enumerate(mols):
+        disp_eps, disp_type = mol.get_dispersion_type()
+        if disp_type == 'NHB':
+            mask = (sigmas[i].pA > 0) #I use total profile here
+            sigma_max = np.max(grid[mask])
+            sigma_min = np.min(grid[mask])
+            if sigma_max > sigma_hb:
+                if sigma_min > -sigma_hb:
+                    disp_type = "HB-ACCEPTOR"
+                else:
+                    disp_type = "HB-DONOR-ACCEPTOR"
+        disp_epss.append(disp_eps)
+        disp_types.append(disp_type)
+
+    from pycosmosac.param import data
+    w = data.disp["w"]
+    A = w * (0.5 * (disp_epss[0]+disp_epss[1]) - (disp_epss[0]*disp_epss[1])**0.5)
+    if "H2O" in disp_types and "COOH" in disp_types:
+        A *= -1.0
+    elif "H2O" in disp_types and "HB-ACCEPTOR" in disp_types:
+        A *= -1.0
+    elif "COOH" in disp_types and ("HB-DONOR-ACCEPTOR" in disp_types or 'NHB' in disp_types):
+        A *= -1.0
+    result = np.asarray([A*x[1]**2, A*x[0]**2])
+    return result
+
 class AC():
     '''
     Class for computing activity coefficients
@@ -168,6 +204,8 @@ class AC():
             The Parameters object.
         split_sigma : bool
             Whether to use splitted sigma profile.
+        dispersion : bool
+            Whether to add dispersion correction. Default is False.
     '''
     def __init__(self, mols, x, T, sigmas, parameters):
         self.mols = mols
@@ -176,6 +214,7 @@ class AC():
         self.sigmas = sigmas
         self.parameters = parameters
         self.split_sigma = sigmas[0].split_sigma
+        self.dispersion = False
         self.sanity_check()
 
     def sanity_check(self):
@@ -185,11 +224,13 @@ class AC():
                 raise RuntimeError("inconsitent sigma grids in sigma files")
 
     def kernel(self):
-        lngamma =  lngamma_c(self.mols, self.x, self.parameters.parameters)
+        lngamma = lngamma_c(self.mols, self.x, self.parameters.parameters)
         if not self.split_sigma:
             lngamma += lngamma_r(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
         else:
             lngamma += lngamma_r3(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
+        if self.dispersion:
+            lngamma += lngamma_dsp(self.mols, self.sigmas, self.x, self.parameters.parameters)
         return lngamma
 
 
@@ -227,3 +268,6 @@ if __name__ == "__main__":
     sigma2.kernel()
     myac = AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
     print(myac.kernel() - np.asarray([8.81631154, 0.0]))
+
+    myac.dispersion = True
+    print(myac.kernel() - np.asarray([9.55918891, 0.]))
