@@ -83,7 +83,7 @@ def get_dispersion_type(mol, geometry=None, connectivity=None):
                 atom_js = []
                 js = []
                 for j in connectivity[i]:
-                    atom_j.append(atoms[j])
+                    atom_js.append(atoms[j])
                     js.append(j)
                 if atom_js.count("O") == 2:
                     for j, atom_j in zip(js,atom_js):

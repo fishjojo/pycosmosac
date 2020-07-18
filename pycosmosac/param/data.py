@@ -27,7 +27,7 @@ Saidi_2002 = {
 Hsieh_2010 = {
   "a_eff" : 7.25,
   "f_decay" : 3.57,
-  "sigma_hb" : 0.0084, #should this be adjustable?
+  "sigma_hb" : 0.0084, #should this be adjustable? this number is from https://dx.doi.org/10.1021/acs.jctc.9b01016
   "c_ohoh" : 4013.78,
   "c_otot" : 932.31,
   "c_ohot" : 3016.43,
@@ -54,6 +54,6 @@ disp = {
   "H(OH)": 19.3477,
   "H(NH)": 141.1709,
   "H(H2O)": 58.3301,
-  "H(COOH)": 58.3301,
+  "H(COOH)": 58.3301, #see http://dx.doi.org/10.1016/j.fluid.2014.01.032; this number is 19.3477 in https://dx.doi.org/10.1021/acs.jctc.9b01016
   "w" : 0.27027
 }
