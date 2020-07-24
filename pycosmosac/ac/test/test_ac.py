@@ -23,6 +23,8 @@ class KnownValues(unittest.TestCase):
         sigma2.kernel()
 
         myac = ac.AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
+        myac.solve_gamma_thresh = 1e-6
+        myac.solve_gamma_maxiter = 500
         self.assertTrue(np.allclose(myac.kernel(), np.asarray([10.05122252, 0.0])))
 
     def test_infinity_dilution3(self):
@@ -36,6 +38,8 @@ class KnownValues(unittest.TestCase):
         sigma2.split_sigma = True
         sigma2.kernel()
         myac = ac.AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
+        myac.solve_gamma_thresh = 1e-6
+        myac.solve_gamma_maxiter = 500
         self.assertTrue(np.allclose(myac.kernel(), np.asarray([8.81631154, 0.0])))
 
     def test_dispersion(self):
@@ -49,6 +53,8 @@ class KnownValues(unittest.TestCase):
         sigma2.split_sigma = True
         sigma2.kernel()
         myac = ac.AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
+        myac.solve_gamma_thresh = 1e-6
+        myac.solve_gamma_maxiter = 500
         myac.dispersion = True
         self.assertTrue(np.allclose(myac.kernel(), np.asarray([9.55918891, 0.])))
 

@@ -2,6 +2,10 @@ import warnings
 import numpy as np
 from pycosmosac.utils import constants as const
 
+#use loose convergence criteria
+SOLVE_GAMMA_THRESH = 1e-3
+SOLVE_GAMMA_MAXITER = 200
+
 def lngamma_c(mols, x, parameters):
     '''
     Staverman−Guggenheim combinatorial term
@@ -30,7 +34,7 @@ def lngamma_c(mols, x, parameters):
     result = np.log(phi_x) + 0.5 * z * q * np.log(theta_phi) + l - phi_x * np.sum(x*l)
     return result
 
-def solve_lnGamma(W, GammaS, ps, T, thresh=1e-3, maxiter=500):
+def solve_lnGamma(W, GammaS, ps, T, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
     #TODO improve convergence speed
     count = 0
     while (count < maxiter):
@@ -44,7 +48,7 @@ def solve_lnGamma(W, GammaS, ps, T, thresh=1e-3, maxiter=500):
         warnings.warn("solving Gamma reached max iterations: %s steps with diff %.3e" % (maxiter,diff))
     return np.log(GammaS)
 
-def lngamma_r(mols, sigmas, x, T, parameters, thresh=1e-3, maxiter=500):
+def lngamma_r(mols, sigmas, x, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
     aeff = parameters["a_eff"]
     A = []
     for mol in mols:
@@ -86,7 +90,7 @@ def lngamma_r(mols, sigmas, x, T, parameters, thresh=1e-3, maxiter=500):
     result = result * n
     return result
 
-def lngamma_r3(mols, sigmas, x, T, parameters, thresh=1e-3, maxiter=500):
+def lngamma_r3(mols, sigmas, x, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
     aeff = parameters["a_eff"]
     A = []
     for mol in mols:
@@ -215,6 +219,8 @@ class AC():
         self.parameters = parameters
         self.split_sigma = sigmas[0].split_sigma
         self.dispersion = False
+        self.solve_gamma_thresh = SOLVE_GAMMA_THRESH
+        self.solve_gamma_maxiter = SOLVE_GAMMA_MAXITER
         self.sanity_check()
 
     def sanity_check(self):
@@ -226,9 +232,9 @@ class AC():
     def kernel(self):
         lngamma = lngamma_c(self.mols, self.x, self.parameters.parameters)
         if not self.split_sigma:
-            lngamma += lngamma_r(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
+            lngamma += lngamma_r(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters, self.solve_gamma_thresh, self.solve_gamma_maxiter)
         else:
-            lngamma += lngamma_r3(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
+            lngamma += lngamma_r3(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters, self.solve_gamma_thresh, self.solve_gamma_maxiter)
         if self.dispersion:
             lngamma += lngamma_dsp(self.mols, self.sigmas, self.x, self.parameters.parameters)
         return lngamma
