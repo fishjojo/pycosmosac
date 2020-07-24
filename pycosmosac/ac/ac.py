@@ -30,7 +30,7 @@ def lngamma_c(mols, x, parameters):
     result = np.log(phi_x) + 0.5 * z * q * np.log(theta_phi) + l - phi_x * np.sum(x*l)
     return result
 
-def solve_lnGamma(W, GammaS, ps, T, thresh=1e-6, maxiter=500):
+def solve_lnGamma(W, GammaS, ps, T, thresh=1e-3, maxiter=500):
     #TODO improve convergence speed
     count = 0
     while (count < maxiter):
@@ -41,10 +41,10 @@ def solve_lnGamma(W, GammaS, ps, T, thresh=1e-6, maxiter=500):
             break
         count += 1
     if count == maxiter:
-        warnings.warn("solving Gamma reached max iterations, %s" % maxiter)
+        warnings.warn("solving Gamma reached max iterations: %s steps with diff %.3e" % (maxiter,diff))
     return np.log(GammaS)
 
-def lngamma_r(mols, sigmas, x, T, parameters, thresh=1e-6, maxiter=500):
+def lngamma_r(mols, sigmas, x, T, parameters, thresh=1e-3, maxiter=500):
     aeff = parameters["a_eff"]
     A = []
     for mol in mols:
@@ -86,7 +86,7 @@ def lngamma_r(mols, sigmas, x, T, parameters, thresh=1e-6, maxiter=500):
     result = result * n
     return result
 
-def lngamma_r3(mols, sigmas, x, T, parameters, thresh=1e-6, maxiter=500):
+def lngamma_r3(mols, sigmas, x, T, parameters, thresh=1e-3, maxiter=500):
     aeff = parameters["a_eff"]
     A = []
     for mol in mols:
