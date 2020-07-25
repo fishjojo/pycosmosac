@@ -27,6 +27,7 @@ setup(name='pycosmosac',
       include_package_data=True,
       packages=find_packages(exclude=['*test*', '*example*','*setup.py']),
       install_requires=['numpy>=1.17.2', 'scipy>=1.3.1', 
-                        'pandas>=0.25.1','simplejson>=3.17.0'],
+                        'pandas>=0.25.1','simplejson>=3.17.0',
+                        'bs4>=4.8.0'],
       zip_safe=False,
      )
