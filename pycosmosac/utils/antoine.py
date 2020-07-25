@@ -1,10 +1,13 @@
 import re
 import numpy as np
-from bs4 import BeautifulSoup
-import requests
 import json
 
 def get_antoine_nist(cas_no):
+    try:
+        from bs4 import BeautifulSoup
+        import requests
+    except:
+        raise ImportError("bs4 and requests needed.")
     url="https://webbook.nist.gov/cgi/cbook.cgi?ID="+cas_no+"&Units=SI&Type=ANTOINE#ANTOINE"
     html_content = requests.get(url).text
     soup = BeautifulSoup(html_content, "lxml")
@@ -61,26 +64,9 @@ def antoine_to_vapor(data, T):
 
 
 if __name__ == "__main__":
-    '''
-    cas_file = "cas_no.txt"
-    with open(cas_file, 'r') as f:
-        contents = f.read()
-    cas_no_lst = []
-    for item in contents.splitlines():
-        cas_no_lst.append(item)
+    data = get_antoine_nist("7732-18-5")
+    print(antoine_to_vapor(data, 300) - 3554.6837736037555)
 
-    out = {}
-    for cas_no in cas_no_lst:
-        try:
-            out[cas_no] = get_antoine_nist(cas_no)
-        except BaseException as BE:
-            print(cas_no)
-            print(BE)
-
-    out_json = json.dumps(out)
-    with open("vapor.json", "w") as f:
-        f.write(out_json)
-    '''
     data = [[[250.04, 328.57], [350.14, 466.73], [212.4, 293.02]], [4.022, 4.46988, 4.13377], [1062.64, 1354.913, 1102.878], [-44.93, -5.537, -40.46]]
     P = antoine_to_vapor(data, 298.15)
     print(P - 66910.00086027385)
