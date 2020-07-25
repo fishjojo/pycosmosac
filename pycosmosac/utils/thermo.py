@@ -16,3 +16,24 @@ def calc_G_binary(lngamma, T, vaporP=None, P=None, density=None, molar_mass=None
             exp = np.exp((vaporP - P) / (RT * molarity[0]))
             G -= frac * np.log(exp)
     return G
+
+
+if __name__ == "__main__":
+    lngamma = 3.0
+    T = 300
+    G = calc_G_binary(lngamma, T)
+    print(G - 1.7884858072629)
+
+    density = [998.]
+    molar_mass = [18.]
+    vaporP = 1e4
+    G = calc_G_binary(lngamma, T, vaporP=vaporP, density=density, molar_mass=molar_mass)
+    print(G - -3.8956651094414827)
+
+    density = [800., 998.]
+    molar_mass = [20., 18.]
+    vaporP = 1e4
+    P = 1e5
+    G = calc_G_binary(lngamma, T, vaporP=vaporP, P=P, density=density, molar_mass=molar_mass)
+    print(G - -3.8951273459414826)
+

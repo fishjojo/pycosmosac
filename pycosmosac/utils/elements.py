@@ -134,8 +134,6 @@ COVALENT_BONDS= {
 def covalent_bond(atom_i, atom_j):
     return COVALENT_BONDS[(atom_i, atom_j)]
 
-
-
 ATOMIC_MASS = [
     0.,                 # GHOST
     1.008,              # H [1.00784, 1.00811]
