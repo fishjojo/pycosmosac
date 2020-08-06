@@ -37,6 +37,29 @@ def mu_c(mols, x, parameters):
     return muc
 
 
+def mu_ig(mol, E_dielec, parameters, disp=False):
+    w_ring = parameters["omega_ring"]
+    eta0 = parameters["eta_0"]
+    n_ring_atom = len(mol.find_ring_atoms())
+    mu = E_dielec * const.hartree2kcal - w_ring * n_ring_atom + eta0
+    if disp:
+        from pycosmosac.param import data
+        E_disp = 0.0
+        cdisp = parameters["cdisp"]
+        areas = mol.cavity.segments["area"]
+        atom_map = mol.cavity.atom_map - 1
+        atoms = mol.geometry["atom"]
+        for i, area in enumerate(areas):
+            symb = atoms[atom_map[i]]
+            if symb in data.disp_RS:
+                tau = data.disp_RS[symb]
+            else:
+                tau = 0.0
+            E_disp += area * tau
+        mu += E_disp * cdisp
+    return mu
+
+
 def solve_sigma_potential(W, ps, aeff, T, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
     mus = np.zeros_like(ps)
     RT = const.R * T
@@ -119,3 +142,4 @@ if __name__ == "__main__":
     myac = RS([mol1,mol2], x, T, [sigma1,sigma2], myparam)
     print(myac.kernel())
 
+    print(mu_ig(mol1, 0.0, data.COSMORS, True))
