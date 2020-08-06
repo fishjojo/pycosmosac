@@ -48,6 +48,21 @@ def solve_lnGamma(W, GammaS, ps, T, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAM
         warnings.warn("solving Gamma reached max iterations: %s steps with diff %.3e" % (maxiter,diff))
     return np.log(GammaS)
 
+def calc_eint(grid, alpha, sigma_hb, chb):
+    '''
+    e_int from the COSMO-RS model
+    Arguments:
+        grid : 1d array
+            charge density
+    '''
+    W = 0.5 * alpha * (grid[:, None] + grid[None, :])**2
+    sigma_acc = np.maximum(grid[:, None], grid[None, :]) - sigma_hb
+    sigma_acc = np.maximum(sigma_acc, 0)
+    sigma_don = np.minimum(grid[:, None], grid[None, :]) + sigma_hb
+    sigma_don = np.minimum(sigma_don, 0)
+    W = W + chb * sigma_acc * sigma_don
+    return W
+
 def lngamma_r(mols, sigmas, x, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
     aeff = parameters["a_eff"]
     A = []
@@ -70,12 +85,7 @@ def lngamma_r(mols, sigmas, x, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter
     alpha = parameters["alpha_prime"]
     sigma_hb = parameters["sigma_hb"]
     chb = parameters["c_hb"]
-    W = 0.5 * alpha * (grid[:, None] + grid[None, :])**2
-    sigma_acc = np.maximum(grid[:, None], grid[None, :]) - sigma_hb
-    sigma_acc = np.maximum(sigma_acc, 0)
-    sigma_don = np.minimum(grid[:, None], grid[None, :]) + sigma_hb
-    sigma_don = np.minimum(sigma_don, 0)
-    W = W + chb * sigma_acc * sigma_don
+    W = calc_eint(grid, alpha, sigma_hb, chb)
 
     GammaS = np.ones_like(ps)
     lnGammaS = solve_lnGamma(W, GammaS, ps, T, thresh, maxiter)

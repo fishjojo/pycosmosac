@@ -57,3 +57,17 @@ disp = {
   "H(COOH)": 58.3301, #see http://dx.doi.org/10.1016/j.fluid.2014.01.032; this number is 19.3477 in https://dx.doi.org/10.1021/acs.jctc.9b01016
   "w" : 0.27027
 }
+
+COSMORS = {
+  "a_eff" : 6.25,
+  "r_av" : 0.5,
+  "f_decay" : 1.0,
+  "c_hb" : 8808.0,
+  "sigma_hb" : 0.0085,
+  "q_0" : 79.53,
+  "r_0" : 66.69,
+  "alpha_prime" : 1428.0,
+  "lambda_0" : 1.0,
+  "lambda_1" : 1.0,
+  "lambda_2" : 1.0
+}

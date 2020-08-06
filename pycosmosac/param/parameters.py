@@ -1,7 +1,7 @@
 import json
 from pycosmosac.param import data
 
-KEYS = ["a_eff", "f_decay", "q_0", "r_0", "z"]
+KEYS = ["a_eff", "f_decay", "q_0", "r_0"]
 
 class Parameters():
     '''
