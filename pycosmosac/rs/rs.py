@@ -37,13 +37,12 @@ def mu_c(mols, x, parameters):
     return muc
 
 
-def mu_ig(mol, E_dielec, parameters, disp=False):
+def mu_ig(mol, E_dielec, parameters, param_disp=None, disp=False):
     w_ring = parameters["omega_ring"]
     eta0 = parameters["eta_0"]
     n_ring_atom = len(mol.find_ring_atoms())
     mu = E_dielec * const.hartree2kcal - w_ring * n_ring_atom + eta0
-    if disp:
-        from pycosmosac.param import data
+    if disp and param_disp:
         E_disp = 0.0
         cdisp = parameters["cdisp"]
         areas = mol.cavity.segments["area"]
@@ -51,8 +50,8 @@ def mu_ig(mol, E_dielec, parameters, disp=False):
         atoms = mol.geometry["atom"]
         for i, area in enumerate(areas):
             symb = atoms[atom_map[i]]
-            if symb in data.disp_RS:
-                tau = data.disp_RS[symb]
+            if symb in param_disp:
+                tau = param_disp[symb]
             else:
                 tau = 0.0
             E_disp += area * tau
@@ -142,4 +141,4 @@ if __name__ == "__main__":
     myac = RS([mol1,mol2], x, T, [sigma1,sigma2], myparam)
     print(myac.kernel())
 
-    print(mu_ig(mol1, 0.0, data.COSMORS, True))
+    print(mu_ig(mol1, 0.0, data.COSMORS, data.disp_RS, True))
