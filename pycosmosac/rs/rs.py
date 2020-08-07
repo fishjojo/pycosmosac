@@ -6,7 +6,7 @@ from pycosmosac.ac import ac
 SOLVE_GAMMA_THRESH = 1e-3
 SOLVE_GAMMA_MAXITER = 200
 
-def mu_c(mols, x, parameters):
+def mu_c(mols, x, T, parameters):
     '''
     Combinatorial contribution based on COSMOtherm release 15.01
     '''
@@ -115,7 +115,7 @@ class RS(ac.AC):
     def kernel(self):
         mu = mu_s(self.mols, self.sigmas, self.x, self.T, self.parameters.parameters)
         if self.comb:
-            mu += mu_c(self.mols, self.x, self.parameters.parameters)
+            mu += mu_c(self.mols, self.x, self.T, self.parameters.parameters)
         return mu
 
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     x = [0., 1.]
     T = 298.15
-    myac = RS([mol1,mol2], x, T, [sigma1,sigma2], myparam)
-    print(myac.kernel())
+    myrs = RS([mol1,mol2], x, T, [sigma1,sigma2], myparam)
+    print(myrs.kernel())
 
     print(mu_ig(mol1, 0.0, data.COSMORS, data.disp_RS, True))
