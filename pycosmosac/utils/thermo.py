@@ -22,7 +22,8 @@ def calc_G_RS(mu_s, mu_ig, T, P, density, molar_mass):
     RT = const.R_SI * T
     frac = RT / 1000.0 * const.kj2kcal
     molarity = density * 1000.0 / molar_mass #mol/m^3
-    G -= frac * np.log(molarity * RT / P)
+    #G -= frac * np.log(molarity * RT / P)
+    G -= frac * np.log(molarity * RT)
     return G
 
 if __name__ == "__main__":
