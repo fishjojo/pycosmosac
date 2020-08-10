@@ -55,6 +55,10 @@ disp = {
   "H(NH)": 141.1709,
   "H(H2O)": 58.3301,
   "H(COOH)": 58.3301, #see http://dx.doi.org/10.1016/j.fluid.2014.01.032; this number is 19.3477 in https://dx.doi.org/10.1021/acs.jctc.9b01016
+  "P": 105.0,
+  "S": 105.0,
+  "Br": 105.0,
+  "I": 105.0,
   "w" : 0.27027
 }
 

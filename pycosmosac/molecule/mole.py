@@ -165,6 +165,18 @@ def get_dispersion_type(mol, geometry=None, connectivity=None):
         elif atom_i == "Cl":
             natom += 1
             disp_tot += data.disp["Cl"]
+        elif atom_i == "Br":
+            natom += 1
+            disp_tot += data.disp["Br"]
+        elif atom_i == "I":
+            natom += 1
+            disp_tot += data.disp["I"]
+        elif atom_i == "P":
+            natom += 1
+            disp_tot += data.disp["P"]
+        elif atom_i == "S":
+            natom += 1
+            disp_tot += data.disp["S"]
         elif atom_i == "H":
             j = connectivity[i][0]
             atom_j = atoms[j]
