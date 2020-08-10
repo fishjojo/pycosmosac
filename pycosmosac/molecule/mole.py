@@ -1,3 +1,4 @@
+import os
 import warnings
 import numpy as np
 from scipy.spatial import distance
@@ -27,7 +28,7 @@ def get_connectivity(mol, geometry=None):
             if d[i,j] <= l:
                 connectivity[i].append(j)
         if not connectivity[i]:
-            raise RuntimeError("atom (%s, %s) has no bonds." % (i+1, atom_i))
+            warnings.warn("atom (%s, %s) has no bonds." % (i+1, atom_i))
     return connectivity
 
 def _dfs(connectivity, iatm, color, traversalOrder, res, parent=None):
@@ -194,7 +195,36 @@ def get_dispersion_type(mol, geometry=None, connectivity=None):
 
     return disp_tot, disp_type
 
-def xyz_to_geometry(xyz):
+def fromstring(string, format='xyz'):
+    format = format.lower()
+    if format == 'xyz':
+        dat = string.splitlines()
+        natm = int(dat[0])
+        return '\n'.join(dat[2:natm+2])
+    elif format == 'raw':
+        return string
+    else:
+        raise NotImplementedError
+
+def fromfile(filename, format=None):
+    if format is None:  # Guess format based on filename
+        format = os.path.splitext(filename)[1][1:].lower()
+        if format not in ('xyz', 'zmat', 'sdf', 'mol2'):
+            format = 'raw'
+    with open(filename, 'r') as f:
+        return fromstring(f.read(), format)
+
+def read_geometry(xyz):
+    if os.path.isfile(xyz):
+        try:
+            xyz_raw = fromfile(xyz)
+            return raw_to_geometry(xyz_raw)
+        except:
+            raise ValueError('Failed to parse geometry file  %s' % xyz)
+    else:
+        return raw_to_geometry(xyz)
+
+def raw_to_geometry(xyz):
     geometry = {}
     geometry["atom"] = []
     geometry["xyz"] = []
@@ -218,6 +248,18 @@ def xyz_to_geometry(xyz):
     else:
         raise NotImplementedError
     return geometry
+
+def geometry_to_xyz(geometry):
+    xyz = ""
+    symb = geometry["atom"]
+    coord = geometry["xyz"]
+    for i in range(len(symb)):
+        xyz += symb[i] + "    "
+        xyz += str(coord[i, 0]) + "    "
+        xyz += str(coord[i, 1]) + "    "
+        xyz += str(coord[i, 2]) + "    "
+        xyz += "\n"
+    return xyz.strip()
 
 class Mole():
     '''
@@ -250,7 +292,7 @@ class Mole():
     def build(self, geometry=None, cavity=None):
         if geometry is not None: 
             if isinstance(geometry, str):
-                self.geometry = xyz_to_geometry(geometry)
+                self.geometry = read_geometry(geometry)
             elif isinstance(geometry, dict):
                 self.geometry = geometry
             else:
