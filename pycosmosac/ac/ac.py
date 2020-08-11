@@ -3,8 +3,8 @@ import numpy as np
 from pycosmosac.utils import constants as const
 
 #use loose convergence criteria
-SOLVE_GAMMA_THRESH = 1e-3
-SOLVE_GAMMA_MAXITER = 200
+SOLVE_GAMMA_THRESH = 4e-4  # 1 J/mol accuracy at 298.15K
+SOLVE_GAMMA_MAXITER = 250
 
 def lngamma_c(mols, x, parameters):
     '''
@@ -62,6 +62,51 @@ def calc_eint(grid, alpha, sigma_hb, chb):
     sigma_don = np.minimum(sigma_don, 0)
     W = W + chb * sigma_acc * sigma_don
     return W
+
+def lngamma_liq(mol, sigma, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
+    aeff = parameters["a_eff"]
+    A = mol.cavity.area
+    n = A / aeff
+    p = sigma.pA / A
+    grid = sigma.sigma_grid
+
+    alpha = parameters["alpha_prime"]
+    sigma_hb = parameters["sigma_hb"]
+    chb = parameters["c_hb"]
+    W = calc_eint(grid, alpha, sigma_hb, chb)
+
+    Gammai = np.ones_like(p)
+    lnGammai = solve_lnGamma(W, Gammai, p, T, thresh, maxiter)
+    result = np.dot(p, lnGammai) * n
+    return result
+
+def e_vapor(mol, sigma, E_dielec, E_cav, T, parameters, param_disp=None, disp=False):
+    RT = const.R * T
+    #E_dielec = E_g - E_s in Hartree
+    result = -E_dielec * const.hartree2kcal
+    result += RT * lngamma_liq(mol, sigma, T, parameters)
+    result += E_cav * const.hartree2kcal
+
+    w_ring = parameters["omega_ring"]
+    eta0 = parameters["eta_0"]
+    n_ring_atom = len(mol.find_ring_atoms())
+    result += -w_ring * n_ring_atom + eta0
+
+    if disp and param_disp:
+        E_disp = 0.0
+        cdisp = param_disp["cdisp"]
+        areas = mol.cavity.segments["area"]
+        atom_map = mol.cavity.atom_map - 1
+        atoms = mol.geometry["atom"]
+        for i, area in enumerate(areas):
+            symb = atoms[atom_map[i]]
+            if symb in param_disp:
+                tau = param_disp[symb]
+            else:
+                tau = 0.0
+            E_disp += area * tau
+        result += E_disp * cdisp
+    return result
 
 def lngamma_r(mols, sigmas, x, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
     aeff = parameters["a_eff"]
@@ -287,3 +332,5 @@ if __name__ == "__main__":
 
     myac.dispersion = True
     print(myac.kernel() - np.asarray([9.55918891, 0.]))
+
+    print(e_vapor(mol1, sigma1, 0.0, 0.0, T, data.Saidi_2002))

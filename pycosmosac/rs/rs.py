@@ -3,7 +3,7 @@ import numpy as np
 from pycosmosac.utils import constants as const
 from pycosmosac.ac import ac
 
-SOLVE_GAMMA_THRESH = 1e-3
+SOLVE_GAMMA_THRESH = 2.39e-4 # 1 J/mol accuracy
 SOLVE_GAMMA_MAXITER = 200
 
 def mu_c(mols, x, T, parameters):
@@ -44,7 +44,7 @@ def mu_ig(mol, E_dielec, parameters, param_disp=None, disp=False):
     mu = E_dielec * const.hartree2kcal - w_ring * n_ring_atom + eta0
     if disp and param_disp:
         E_disp = 0.0
-        cdisp = parameters["cdisp"]
+        cdisp = param_disp["cdisp"]
         areas = mol.cavity.segments["area"]
         atom_map = mol.cavity.atom_map - 1
         atoms = mol.geometry["atom"]
