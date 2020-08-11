@@ -59,12 +59,12 @@ def mu_ig(mol, E_dielec, parameters, param_disp=None, disp=False):
     return mu
 
 
-def solve_sigma_potential(W, ps, aeff, T, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
+def solve_sigma_potential(W, ps, T, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLVE_GAMMA_MAXITER):
     mus = np.zeros_like(ps)
     RT = const.R * T
     count = 0
     while (count < maxiter):
-        mus_new = -RT / aeff * np.log(np.sum(np.exp(aeff * (mus - W) / RT) * ps, axis=1))
+        mus_new = -RT * np.log(np.sum(np.exp((mus - W) / RT) * ps, axis=1))
         mus = 0.5 * (mus + mus_new)
         diff = np.amax(np.absolute(mus_new - mus))
         if diff < thresh:
@@ -81,6 +81,7 @@ def mu_s(mols, sigmas, x, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLV
     for mol in mols:
         A.append(mol.cavity.area)
     A = np.asarray(A)
+    n = A / aeff
 
     p = []
     for i, sigma in enumerate(sigmas):
@@ -97,12 +98,12 @@ def mu_s(mols, sigmas, x, T, parameters, thresh=SOLVE_GAMMA_THRESH, maxiter=SOLV
     sigma_hb = parameters["sigma_hb"]
     chb = parameters["c_hb"]
     W = ac.calc_eint(grid, alpha, sigma_hb, chb)
-    mus = solve_sigma_potential(W, ps, aeff, T, thresh, maxiter)
+    mus = solve_sigma_potential(W, ps, T, thresh, maxiter)
 
     result = []
     for pi in p:
         result.append(np.dot(pi, mus))
-    result = np.asarray(result)
+    result = np.asarray(result) * n
     return result
 
 
