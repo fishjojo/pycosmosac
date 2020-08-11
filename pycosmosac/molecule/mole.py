@@ -249,11 +249,13 @@ def raw_to_geometry(xyz):
         raise NotImplementedError
     return geometry
 
-def geometry_to_xyz(geometry):
-    xyz = ""
+def geometry_to_xyz(geometry, name="unknown"):
     symb = geometry["atom"]
     coord = geometry["xyz"]
-    for i in range(len(symb)):
+    natom = len(symb)
+    xyz = str(natom) + "\n"
+    xyz += name + "\n"
+    for i in range(natom):
         xyz += symb[i] + "    "
         xyz += str(coord[i, 0]) + "    "
         xyz += str(coord[i, 1]) + "    "
