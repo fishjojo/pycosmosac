@@ -315,7 +315,7 @@ if __name__ == "__main__":
     x = [0., 1.]
     T = 298.15
     myac = AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
-    print(myac.kernel() - np.asarray([10.05122252, 0.0]))
+    print(myac.kernel() - np.asarray([10.05271196, 0.0]))
 
     myparam = parameters.Parameters(data.Hsieh_2010)
     sigma1 = sigma.Sigma(mol1, myparam)
@@ -328,9 +328,9 @@ if __name__ == "__main__":
     sigma2.split_sigma = True
     sigma2.kernel()
     myac = AC([mol1,mol2], x, T, [sigma1,sigma2], myparam)
-    print(myac.kernel() - np.asarray([8.81631154, 0.0]))
+    print(myac.kernel() - np.asarray([8.81637328, 0.0]))
 
     myac.dispersion = True
-    print(myac.kernel() - np.asarray([9.55918891, 0.]))
+    print(myac.kernel() - np.asarray([9.55925066, 0.]))
 
-    print(e_vapor(mol1, sigma1, 0.0, 0.0, T, data.Saidi_2002))
+    print(e_vapor(mol1, sigma1, 0.0, 0.0, T, data.BIOSAC_SVP_GEPOL, data.BIOSAC_SVP_GEPOL_disp, True) - -0.7958114651606643)
