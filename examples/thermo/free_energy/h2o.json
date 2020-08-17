@@ -1,0 +1,27 @@
+{ "bagel" : [
+{
+  "title" : "molecule",
+  "basis" : "aug-cc-pvtz",
+  "df_basis" : "aug-cc-pvtz-jkfit",
+  "angstrom" : true,
+  "geometry" : [
+{ "atom" : "O",  "xyz" : [ 0.000000000,    0.000000000,   -0.405655705 ] },
+{ "atom" : "H",  "xyz" : [ 0.770106178,    0.000000000,    0.202827852 ] },
+{ "atom" : "H",  "xyz" : [-0.770106178,    0.000000000,    0.202827852 ] }
+  ]
+},
+{
+"title" : "ks",
+"xc_func" : "bp86",
+"df" : true,
+"dispersion" : true,
+"solvation" : true,
+"solvent" : "water",
+"xvalue" : -1.0,
+"iswig" : false,
+"cavity" : "ses",
+"solvent_radius" : 1.3,
+"printcosmo" : true,
+"cosmofile" : "h2o.cosmo"
+}
+]}
